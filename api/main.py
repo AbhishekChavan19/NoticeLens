@@ -94,17 +94,11 @@ async def process_notice(
         try:
             suffix = Path(filename).suffix.lower()
             if suffix in [".jpg", ".jpeg", ".png", ".webp", ".bmp"]:
-                from PIL import Image, ImageOps
+                from PIL import Image
                 import io
                 import pytesseract
 
                 img = Image.open(io.BytesIO(file_bytes))
-                # Fix mobile camera orientation
-                img = ImageOps.exif_transpose(img)
-                # Downscale large mobile camera photos to ~1600px for 5x faster OCR
-                max_dim = 1600
-                if max(img.size) > max_dim:
-                    img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
                 extracted_text = pytesseract.image_to_string(img, lang="eng+mar")
             else:
                 result = extract_from_pdf(file_bytes)
@@ -133,11 +127,14 @@ async def process_notice(
 
     # ── Phase 4: Classification ──────────────────────────────────────────────
     try:
-        cls_result = predict_notice_category(extracted_text)
+        cls_result = predict_notice_category(extracted_text, threshold=0.35)
+        raw_cat = cls_result.get("raw_category")
         category = cls_result.get("category", "General")
+        if category == "Other/Uncertain" and raw_cat:
+            category = raw_cat
         category_confidence = float(cls_result.get("confidence", 0.0))
     except Exception as e:
-        logger.warning(f"Classification failed: {e}")
+        logger.error(f"Classification failed: {e}", exc_info=True)
         category, category_confidence = "General", 0.0
 
     logger.info(f"Language: {language} ({language_confidence:.2f}) | Category: {category} ({category_confidence:.2f})")

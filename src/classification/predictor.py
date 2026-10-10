@@ -70,7 +70,9 @@ class NoticePredictor:
                 logger.warning(f"Failed to load baseline model ({e}). Training baseline on notices.csv...")
                 try:
                     import pandas as pd
-                    df = pd.read_csv("data/dataset/notices.csv")
+                    from src.classification.config import ROOT_DIR, LABEL2ID
+                    csv_path = ROOT_DIR / "data" / "dataset" / "notices.csv"
+                    df = pd.read_csv(csv_path)
                     df = df.dropna(subset=["text", "category"])
                     df["label"] = df["category"].map(LABEL2ID)
                     self.baseline_model.train(df["text"].tolist(), df["label"].tolist())

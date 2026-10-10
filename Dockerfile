@@ -26,7 +26,11 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY src/ ./src/
 COPY api/ ./api/
 COPY config/ ./config/
-COPY models/baseline_svm/ ./models/baseline_svm/
+COPY models/ ./models/
+COPY data/dataset/notices.csv ./data/dataset/notices.csv
+
+# Train baseline model inside container for 100% environment compatibility
+RUN python -c "from src.classification.baseline import BaselineClassifier; import pandas as pd; from src.classification.config import LABEL2ID; df = pd.read_csv('data/dataset/notices.csv').dropna(subset=['text', 'category']); df['label'] = df['category'].map(LABEL2ID); b = BaselineClassifier(); b.train(df['text'].tolist(), df['label'].tolist()); b.save()"
 
 EXPOSE 8000
 

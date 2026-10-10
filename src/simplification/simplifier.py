@@ -32,24 +32,24 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT_ENGLISH = """You are a concise, student-friendly assistant for college notices.
-Your task is to summarize structured notice data into a crisp, high-impact overview in English.
+SYSTEM_PROMPT_ENGLISH = """You are an intelligent, student-friendly assistant for college notices.
+Your task is to summarize structured notice data into a clear, helpful, and easily understandable overview in English.
 
 GUIDELINES:
-1. WHAT IS THIS NOTICE ABOUT: Keep it SHORT (1-2 punchy sentences). Clearly highlight the core purpose and why this notice is important for the reader. Do not write lengthy paragraphs.
-2. WHO IS IT FOR: Name the specific target students/classes in short (e.g., "All Final Year Computer Dept students").
-3. WHAT DO I NEED TO DO: Crisp action step or "No action required. For information only."
+1. WHAT IS THIS NOTICE ABOUT: Clearly explain the core purpose, subject matter, and importance of this notice in clear, accessible sentences.
+2. WHO IS IT FOR: Name the specific target students/classes (e.g., "All Final Year Computer Dept students").
+3. WHAT DO I NEED TO DO: Clear actionable steps or "No action required. For information only."
 4. DEADLINE: Exact deadline date/time or "No deadline mentioned."
 5. IMPORTANT DATES: Key dates in brief or "None."
 6. DOCUMENTS REQUIRED: List documents or "No documents required."
 7. FEES: Fee amount or "No fees mentioned (Free)."
-8. ELIGIBILITY: Short eligibility criteria or "Applicable to all mentioned students."
-9. IMPORTANT NOTE: 1 key alert/warning or "Adhere to college guidelines."
+8. ELIGIBILITY: Eligibility criteria or "Applicable to all mentioned students."
+9. IMPORTANT NOTE: Important alerts, instructions or "Adhere to college guidelines."
 
 Respond in valid JSON with these fields:
-- what_is_this_notice_about (string, 1-2 short sentences highlighting core purpose & importance)
-- who_is_it_for (string, short)
-- what_do_i_need_to_do (string, short)
+- what_is_this_notice_about (string)
+- who_is_it_for (string)
+- what_do_i_need_to_do (string)
 - deadline (string or 'No deadline mentioned')
 - important_dates (string or 'None')
 - documents_required (string or 'No documents required')
@@ -58,22 +58,22 @@ Respond in valid JSON with these fields:
 - important_note (string or 'Adhere to college guidelines')
 """
 
-SYSTEM_PROMPT_MARATHI = """तुम्ही कॉलेजच्या विद्यार्थ्यांसाठी अचूक व संक्षिप्त सहाय्यक आहात.
-तुमचे काम structured कॉलेज नोटीस डेटा अत्यंत मोजक्या, प्रभावी आणि सोप्या मराठीमध्ये रूपांतरित करणे आहे.
+SYSTEM_PROMPT_MARATHI = """तुम्ही कॉलेजच्या विद्यार्थ्यांसाठी उपयुक्त व मार्गदर्शक सहाय्यक आहात.
+तुमचे काम structured कॉलेज नोटीस डेटा सोप्या, स्पष्ट आणि विद्यार्थी-अनुकूल मराठीमध्ये रूपांतरित करणे आहे.
 
 मार्गदर्शक तत्त्वे:
-1. हा नोटीस कशाबद्दल आहे: अत्यंत संक्षिप्त (१-२ ओळींत). या नोटीसचे मुख्य महत्त्व आणि हेतू काय आहे ते वाचकाला लगेच समजेल असे लिहा. लांबलचक परिच्छेद लिहू नका.
-2. कोणासाठी आहे: लक्ष्यित विद्यार्थी किंवा वर्ग थोडक्यात सांगा.
+1. हा नोटीस कशाबद्दल आहे: नोटीसचा मुख्य हेतू आणि महत्त्व सोप्या मराठीत स्पष्ट सांगा जेणेकरून वाचकाला पूर्ण माहिती समजेल.
+2. कोणासाठी आहे: लक्ष्यित विद्यार्थी किंवा वर्ग स्पष्ट सांगा.
 3. मला काय करावे लागेल: नेमकी कृती किंवा "कोणतीही कृती आवश्यक नाही. केवळ माहितीसाठी."
 4. अंतिम तारीख: अंतिम तारीख किंवा "कोणतीही अंतिम तारीख नमूद केलेली नाही."
-5. महत्त्वाच्या तारखा: थोडक्यात तारखा किंवा "नाहीत."
+5. महत्त्वाच्या तारखा: तारखा किंवा "नाहीत."
 6. आवश्यक कागदपत्रे: कागदपत्रांची यादी किंवा "कोणत्याही कागदपत्रांची आवश्यकता नाही."
 7. फी: फीची रक्कम किंवा "कोणतीही फी नमूद केलेली नाही (मोफत)."
-8. पात्रता: थोडक्यात पात्रता किंवा "सर्व संबंधित विद्यार्थ्यांसाठी लागू."
-9. महत्त्वाची सूचना: १ महत्त्वाची सूचना किंवा "कॉलेजच्या नियमांचे पालन करा."
+8. पात्रता: पात्रता निकष किंवा "सर्व संबंधित विद्यार्थ्यांसाठी लागू."
+9. महत्त्वाची सूचना: महत्त्वाची सूचना किंवा "कॉलेजच्या नियमांचे पालन करा."
 
 Respond in valid JSON with these exact fields:
-- हा_नोटीस_कशाबद्दल_आहे (string, १-२ ओळींत मुख्य महत्त्व व हेतू)
+- हा_नोटीस_कशाबद्दल_आहे (string)
 - कोणासाठी_आहे (string)
 - मला_काय_करावे_लागेल (string)
 - अंतिम_तारीख (string)
@@ -125,7 +125,6 @@ def _simplify_english(
         ],
         response_format={"type": "json_object"},
         temperature=0.2,
-        max_tokens=600,
     )
     raw_json = completion.choices[0].message.content
     if not isinstance(raw_json, str):
@@ -169,7 +168,6 @@ def _simplify_marathi(
         ],
         response_format={"type": "json_object"},
         temperature=0.2,
-        max_tokens=600,
     )
     raw_json = completion.choices[0].message.content
     if not isinstance(raw_json, str):
