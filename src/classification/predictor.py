@@ -14,9 +14,17 @@ import os
 import logging
 from typing import Dict, Any, Optional
 
-import torch
-import torch.nn.functional as F
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+try:
+    import torch
+    import torch.nn.functional as F
+    from transformers import AutoTokenizer, AutoModelForSequenceClassification
+    TORCH_AVAILABLE = True
+except ImportError:
+    torch = None
+    F = None
+    AutoTokenizer = None
+    AutoModelForSequenceClassification = None
+    TORCH_AVAILABLE = False
 
 from src.classification.config import (
     MODEL_SAVE_DIR, DEFAULT_CONFIDENCE_THRESHOLD,
@@ -40,7 +48,7 @@ class NoticePredictor:
     ):
         self.model_dir = model_dir
         self.threshold = threshold
-        self.device = torch.device(device_str)
+        self.device = torch.device(device_str) if (TORCH_AVAILABLE and torch is not None) else "cpu"
         self.use_baseline = use_baseline
         self.model = None
         self.tokenizer = None
@@ -72,12 +80,18 @@ class NoticePredictor:
                     logger.warning(f"Failed to auto-train baseline ({train_err}). Falling back to XLM-RoBERTa.")
 
         # XLM-RoBERTa fallback / alternative
-        if os.path.exists(self.model_dir) and os.path.exists(os.path.join(self.model_dir, "config.json")):
+        if (
+            TORCH_AVAILABLE
+            and AutoTokenizer is not None
+            and os.path.exists(self.model_dir)
+            and os.path.exists(os.path.join(self.model_dir, "config.json"))
+        ):
             try:
                 logger.info(f"Loading XLM-RoBERTa model from: {self.model_dir}")
                 self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir)
                 self.model = AutoModelForSequenceClassification.from_pretrained(self.model_dir)
-                self.model.to(self.device)
+                if self.device is not None:
+                    self.model.to(self.device)
                 self.model.eval()
             except Exception as e:
                 logger.error(f"Failed to load XLM-RoBERTa model from {self.model_dir}: {e}")
