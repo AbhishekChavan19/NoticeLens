@@ -66,12 +66,22 @@ class ProcessResult(BaseModel):
 
 @app.api_route("/", methods=["GET", "HEAD"])
 def root():
-    return {"message": "NoticeLens API is running", "version": "1.0.0"}
+    return {"message": "NoticeLens API is running", "version": "1.0.1"}
 
 
 @app.api_route("/health", methods=["GET", "HEAD"])
 def health():
     return {"status": "ok"}
+
+
+@app.post("/api/v1/classify")
+def classify_text(text: str = Form(...)):
+    try:
+        return predict_notice_category(text, threshold=0.35)
+    except Exception as e:
+        logger.error(f"Classify error: {e}", exc_info=True)
+        return {"error": str(e), "category": "General", "confidence": 0.0}
+
 
 
 @app.post("/api/v1/process", response_model=ProcessResult)
