@@ -92,13 +92,23 @@ async def process_notice(
         file_bytes = await file.read()
         filename = (file.filename or "upload").lower()
         try:
-            suffix = Path(filename).suffix or ".bin"
-            with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-                tmp.write(file_bytes)
-                tmp_path = tmp.name
-            result = extract_from_pdf(file_bytes)   # Works for PDF and images
-            os.unlink(tmp_path)
-            extracted_text = result.extracted_text
+            suffix = Path(filename).suffix.lower()
+            if suffix in [".jpg", ".jpeg", ".png", ".webp", ".bmp"]:
+                from PIL import Image, ImageOps
+                import io
+                import pytesseract
+
+                img = Image.open(io.BytesIO(file_bytes))
+                # Fix mobile camera orientation
+                img = ImageOps.exif_transpose(img)
+                # Downscale large mobile camera photos to ~1600px for 5x faster OCR
+                max_dim = 1600
+                if max(img.size) > max_dim:
+                    img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
+                extracted_text = pytesseract.image_to_string(img, lang="eng+mar")
+            else:
+                result = extract_from_pdf(file_bytes)
+                extracted_text = result.extracted_text
         except Exception as e:
             return ProcessResult(success=False, error=f"Text extraction failed: {str(e)}")
 
