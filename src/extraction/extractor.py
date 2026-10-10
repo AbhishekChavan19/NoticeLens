@@ -190,6 +190,7 @@ def extract_structured_information(
                 ],
                 response_format={"type": "json_object"},
                 temperature=0.1,
+                max_tokens=700,
             )
             raw_json = completion.choices[0].message.content
             if not isinstance(raw_json, str):

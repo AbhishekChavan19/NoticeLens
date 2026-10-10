@@ -125,6 +125,7 @@ def _simplify_english(
         ],
         response_format={"type": "json_object"},
         temperature=0.2,
+        max_tokens=600,
     )
     raw_json = completion.choices[0].message.content
     if not isinstance(raw_json, str):
@@ -168,6 +169,7 @@ def _simplify_marathi(
         ],
         response_format={"type": "json_object"},
         temperature=0.2,
+        max_tokens=600,
     )
     raw_json = completion.choices[0].message.content
     if not isinstance(raw_json, str):
