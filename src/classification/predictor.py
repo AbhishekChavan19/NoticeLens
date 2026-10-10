@@ -127,7 +127,7 @@ class NoticePredictor:
             res = self.baseline_model.predict(text)
             top_cat = res["category"]
             conf = res["confidence"]
-            final_cat = top_cat if conf >= thresh else "Other/Uncertain"
+            final_cat = top_cat if (thresh is None or conf >= thresh) else top_cat
 
             return {
                 "category": final_cat,

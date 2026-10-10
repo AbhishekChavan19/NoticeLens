@@ -66,7 +66,7 @@ class ProcessResult(BaseModel):
 
 @app.api_route("/", methods=["GET", "HEAD"])
 def root():
-    return {"message": "NoticeLens API is running", "version": "1.0.1"}
+    return {"message": "NoticeLens API is running", "version": "1.0.2"}
 
 
 @app.api_route("/health", methods=["GET", "HEAD"])
@@ -137,12 +137,13 @@ async def process_notice(
 
     # ── Phase 4: Classification ──────────────────────────────────────────────
     try:
-        cls_result = predict_notice_category(extracted_text, threshold=0.35)
+        cls_result = predict_notice_category(extracted_text, threshold=0.20)
         raw_cat = cls_result.get("raw_category")
-        category = cls_result.get("category", "General")
+        category = cls_result.get("category") or raw_cat or "General"
         if category == "Other/Uncertain" and raw_cat:
             category = raw_cat
         category_confidence = float(cls_result.get("confidence", 0.0))
+        logger.info(f"Classified category: {category} (conf: {category_confidence:.2f})")
     except Exception as e:
         logger.error(f"Classification failed: {e}", exc_info=True)
         category, category_confidence = "General", 0.0
