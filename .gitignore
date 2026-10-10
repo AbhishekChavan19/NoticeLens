@@ -1,0 +1,47 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Model files (large binary files)
+models/*.bin
+models/*.pt
+models/*.pth
+models/*.onnx
+models/notice_classifier/
+
+# Data files
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Database
+*.db
+
+# Logs
+logs/
+*.log
+
+# Distribution
+dist/
+build/
+*.egg-info/

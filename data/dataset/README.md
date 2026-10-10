@@ -1,0 +1,170 @@
+# NoticeLens Dataset Guide
+
+This directory contains the dataset for training and evaluating the NoticeLens
+notice classifier.
+
+## CSV Format
+
+The dataset file `notices.csv` uses the following schema:
+
+| Column     | Type   | Description                                    | Required |
+|------------|--------|------------------------------------------------|----------|
+| `id`       | string | Unique identifier (e.g., `Acad001`, `E015`)    | Yes      |
+| `text`     | string | Full extracted text content of the notice       | Yes      |
+| `category` | string | Notice category (see allowed values below)     | Yes      |
+| `language` | string | Language code: `en`, `mr`, `mixed`, `unknown`  | Yes      |
+| `source`   | string | Where the notice came from                     | Yes      |
+
+### Allowed Categories
+
+| Category     | Description                                 |
+|-------------|----------------------------------------------|
+| Examination  | Exam schedules, hall tickets, results        |
+| Academics    | Timetables, syllabus, attendance, projects   |
+| Admission    | Admission forms, merit lists, fee payment    |
+| Scholarship  | Scholarship notices, eligibility, deadlines  |
+| Placement    | Placement drives, company visits             |
+| Internship   | Internship opportunities, guidelines         |
+| Event        | College events, workshops, seminars          |
+| General      | General announcements, holidays, circulars   |
+| Other        | Anything that doesn't fit above categories   |
+
+### Language Codes
+
+| Code      | Meaning                     |
+|-----------|-----------------------------|
+| `en`      | English                     |
+| `mr`      | Marathi                     |
+| `mixed`   | Both English and Marathi    |
+| `unknown` | Not yet determined          |
+
+---
+
+## How to Build the Dataset
+
+### Option 1: Automatic Extraction from PDFs (Recommended Start)
+
+If you have PDF notices in `data/raw/`, run the preparation script:
+
+```bash
+# Basic extraction (text-based PDFs only)
+python -m src.dataset.prepare
+
+# With OCR for scanned PDFs (requires Tesseract)
+python -m src.dataset.prepare --ocr
+```
+
+This will:
+1. Read all PDFs from `data/raw/`
+2. Extract text using PyMuPDF (+ OCR if enabled)
+3. Infer categories from filename prefixes (e.g., `Acad001.pdf` → Academics)
+4. Save to `data/dataset/notices.csv`
+
+**After running, you should manually review the CSV** to:
+- Verify categories are correct
+- Set the `language` field (`en`, `mr`, or `mixed`)
+- Fix any extraction errors
+
+### Option 2: Manually Adding Notices
+
+1. Open `data/dataset/notices.csv` in Excel, VS Code, or any text editor
+2. Add a new row for each notice
+3. Fill in all 5 fields:
+
+```csv
+id,text,category,language,source
+my_notice_001,"Text content of the notice goes here...",Examination,en,manual_entry
+```
+
+**Tips for manual entry:**
+- Use a unique ID for each notice (e.g., `exam_001`, `acad_spring_2025`)
+- Copy the full notice text — don't summarize
+- If the text has commas or newlines, wrap it in double quotes
+- For Marathi text, just paste it directly — CSV handles Unicode
+- Set `source` to describe where you got it (e.g., `pccoe_website`, `manual_entry`)
+
+### Option 3: Combining Both
+
+Run the automatic extraction first, then manually add more notices to the CSV.
+Just make sure IDs are unique across all entries.
+
+---
+
+## Validating the Dataset
+
+After adding notices, validate the dataset:
+
+```bash
+python -m src.dataset.validator
+```
+
+This checks for:
+- Missing or empty text
+- Missing or invalid categories
+- Duplicate IDs
+- Extremely short documents (< 50 characters)
+
+---
+
+## Viewing Dataset Statistics
+
+```bash
+python -m src.dataset.statistics
+```
+
+To inspect a specific record:
+```bash
+python -m src.dataset.statistics --inspect Acad001
+```
+
+To list records by category:
+```bash
+python -m src.dataset.statistics --list --category Examination --limit 5
+```
+
+---
+
+## Splitting the Dataset
+
+Split into train/validation/test sets (70/15/15):
+
+```bash
+python -m src.dataset.splitter
+```
+
+This creates:
+- `data/dataset/train.csv` (70%)
+- `data/dataset/val.csv` (15%)
+- `data/dataset/test.csv` (15%)
+
+Categories with fewer than 3 examples cannot be properly stratified
+and will be placed entirely in the training set with a warning.
+
+Custom ratios:
+```bash
+python -m src.dataset.splitter --train-ratio 0.8 --val-ratio 0.1 --test-ratio 0.1
+```
+
+---
+
+## Recommended Dataset Size
+
+For reasonable classifier performance, aim for:
+- **Minimum:** 5-10 notices per category
+- **Good:** 20-30 notices per category
+- **Best:** 50+ notices per category
+
+Focus first on the categories most common at PCCOE (Examination, Academics,
+Admission, Scholarship) and add others as you find them.
+
+---
+
+## Files in this Directory
+
+| File          | Description                           |
+|---------------|---------------------------------------|
+| `notices.csv` | Main dataset (all notices)            |
+| `train.csv`   | Training split (generated by splitter)|
+| `val.csv`     | Validation split (generated)          |
+| `test.csv`    | Test split (generated)                |
+| `README.md`   | This documentation file               |

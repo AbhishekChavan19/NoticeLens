@@ -1,0 +1,3 @@
+"""
+NoticeLens Configuration Package
+"""
